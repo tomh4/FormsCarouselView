@@ -29,17 +29,12 @@ namespace CarouselView.Droid.CustomRenderers
 
 
         protected override void OnElementChanged(VisualElementChangedEventArgs e)
-
         {
-
             base.OnElementChanged(e);
-
             if (e.NewElement == null) return;
             e.NewElement.PropertyChanged += ElementPropertyChanged;
-
         }
-
-
+        
 
         void ElementPropertyChanged(object sender, PropertyChangedEventArgs e)
         {

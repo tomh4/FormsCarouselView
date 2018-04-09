@@ -5,11 +5,11 @@
              x:Class="CarouselView.TestVisualisationPage">
     <ContentPage.Content>
         <StackLayout Padding="20">
-            <custom:Carousel x:Name="carousel" Snapping="True">
+            <custom:Carousel x:Name="carousel" Snapping="True" SnapPosition="0.5">
                 <custom:Carousel.ItemTemplate>
                     <DataTemplate>
                         <ViewCell>
-                            <BoxView Color="Black" HeightRequest="300" WidthRequest="300"/>
+                            <BoxView Color="Black" HeightRequest="100" WidthRequest="100"/>
                         </ViewCell>
                     </DataTemplate>
             </custom:Carousel.ItemTemplate>
