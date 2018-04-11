@@ -5,14 +5,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Xamarin.Forms;
+using CarouselView.CustomControls;
 
 namespace CarouselView
 {
-	public partial class Carousel : ContentView
-	{
-        private double carouselWidth, carouselScrollPosition;
+    public partial class Carousel : ContentView
+    {
+        private double carouselWidth, carouselScrollPosition, carouselContentViewSize = 0;
+        private DotButtonsLayout dotLayout;
         public TapGestureRecognizer tapGestureRecognizer = new TapGestureRecognizer();
         private int carouselPagesCount;
+        #region SnappingProperties
         public static readonly BindableProperty SnappingProperty =
             BindableProperty.Create(propertyName: "Snapping",
             returnType: typeof(bool),
@@ -37,7 +40,57 @@ namespace CarouselView
             get { return (float)GetValue(SnapPositionProperty); }
             set { SetValue(SnapPositionProperty, (value < 0) ? 0 : (value > 1f) ? 1f : value); }
         }
+        #endregion
+        #region IndicatorsProperties
+        public static readonly BindableProperty IndicatorsProperty =
+            BindableProperty.Create(propertyName: "Indicators",
+            returnType: typeof(bool),
+            declaringType: typeof(Carousel),
+            defaultValue: false,
+            defaultBindingMode: BindingMode.OneWay);
+        public bool Indicators
+        {
+            get { return (bool)GetValue(IndicatorsProperty); }
+            set { SetValue(IndicatorsProperty, value); }
+        }
 
+        public static readonly BindableProperty IndicatorsAboveCarouselProperty =
+            BindableProperty.Create(propertyName: "IndicatorsAboveCarousel",
+            returnType: typeof(bool),
+            declaringType: typeof(Carousel),
+            defaultValue: false,
+            defaultBindingMode: BindingMode.OneWay);
+        public bool IndicatorsAboveCarousel
+        {
+            get { return (bool)GetValue(IndicatorsAboveCarouselProperty); }
+            set { SetValue(IndicatorsAboveCarouselProperty, value); }
+        }
+
+        public static readonly BindableProperty IndicatorsColorProperty =
+            BindableProperty.Create(propertyName: "IndicatorsColor",
+            returnType: typeof(Color),
+            declaringType: typeof(Carousel),
+            defaultValue: Color.White,
+            defaultBindingMode: BindingMode.OneWay);
+        public Color IndicatorsColor
+        {
+            get { return (Color)GetValue(IndicatorsColorProperty); }
+            set { SetValue(IndicatorsColorProperty, value); }
+        }
+
+        public static readonly BindableProperty IndicatorsSizeProperty =
+            BindableProperty.Create(propertyName: "IndicatorsSize",
+            returnType: typeof(int),
+            declaringType: typeof(Carousel),
+            defaultValue: 10,
+            defaultBindingMode: BindingMode.OneWay);
+        public int IndicatorsSize
+        {
+            get { return (int)GetValue(IndicatorsSizeProperty); }
+            set { SetValue(IndicatorsSizeProperty, value); }
+        }
+        #endregion
+        #region ItemSourceProperties
         public static readonly BindableProperty ItemsSourceProperty =
             BindableProperty.Create(propertyName: "ItemsSource",
             returnType: typeof(IEnumerable),
@@ -49,7 +102,7 @@ namespace CarouselView
         private static void OnItemSourceChanged(BindableObject bindable, object oldValue, object newValue)
         {
             var control = (Carousel)bindable;
-            control.Render(oldValue,newValue);
+            control.Render(oldValue, newValue);
         }
         public IEnumerable ItemsSource
         {
@@ -74,9 +127,10 @@ namespace CarouselView
             get { return (DataTemplate)GetValue(ItemTemplateProperty); }
             set { SetValue(ItemTemplateProperty, value); }
         }
+        #endregion
         public Carousel()
-		{
-			InitializeComponent();
+        {
+            InitializeComponent();
             carouselScrollView.carouselParent = this;
             tapGestureRecognizer.Tapped += TapGestureRecognizer_Tapped;
         }
@@ -92,11 +146,10 @@ namespace CarouselView
         {
         }
 
-        public void Render(object oldItemsSource, object newItemsSource,bool completeReRender = false)
+        public void Render(object oldItemsSource, object newItemsSource, bool completeReRender = false)
         {
             if (this.ItemTemplate == null || this.ItemsSource == null)
                 return;
-
             var layout = new CustomStackLayout();
             layout.carouselParent = this;
             layout.Orientation = StackOrientation.Horizontal;
@@ -112,10 +165,33 @@ namespace CarouselView
             }
             carouselScrollView.Content = layout;
             carouselScrollView.Scrolled += CarouselScrollView_Scrolled;
+            //Create indicators and place them abover or below the carousel
+            if (Indicators)
+            {
+                dotLayout = new DotButtonsLayout(carouselPagesCount, IndicatorsColor, IndicatorsSize);
+                foreach (DotButton dot in dotLayout.dots)
+                    dot.Clicked += DotClicked;
+            }
         }
+        //The function called by the buttons clicked event
+        private async void DotClicked(object sender)
+        {
+            var button = (DotButton)sender;
+            //Get the selected buttons index
+            int index = button.index;
+            //Set the corresponding page as position of the carousel view
+            var snapOffset = carouselScrollView.scrollViewWidth * SnapPosition - carouselContentViewSize / 2;
+            if (snapOffset < 0)
+            {
+                snapOffset = 0;
+            }
+            var desiredPosition = carouselScrollView.placeHolderOffset + (carouselContentViewSize + carouselScrollView.spacing) * index;
+            desiredPosition -= snapOffset;
+            await carouselScrollView.ScrollToAsync(desiredPosition, 0, true);
+        }
+
         public async Task Snap()
         {
-            var carouselContentViewSize = ((carouselWidth - 2*carouselScrollView.placeHolderOffset - ((carouselPagesCount-1)*carouselScrollView.spacing)) / (carouselPagesCount));
             if (carouselScrollPosition < carouselScrollView.placeHolderOffset)
             {
                 var startPosition = carouselScrollView.scrollViewWidth * SnapPosition - carouselContentViewSize / 2;
@@ -123,12 +199,12 @@ namespace CarouselView
                 {
                     startPosition = 0;
                 }
-                await carouselScrollView.ScrollToAsync(carouselScrollView.placeHolderOffset-startPosition, 0, true);
+                await carouselScrollView.ScrollToAsync(carouselScrollView.placeHolderOffset - startPosition, 0, true);
             }
             else
             {
                 var endPosition = carouselScrollView.placeHolderOffset;
-                endPosition += (carouselPagesCount - 1) * (carouselContentViewSize+carouselScrollView.spacing);
+                endPosition += (carouselPagesCount - 1) * (carouselContentViewSize + carouselScrollView.spacing);
                 var snapOffset = carouselScrollView.scrollViewWidth * SnapPosition - carouselContentViewSize / 2;
                 if (snapOffset < 0)
                 {
@@ -149,19 +225,36 @@ namespace CarouselView
                             snapOffset = 0;
                         }
                         var desiredPosition = carouselScrollPosition - carouselScrollView.placeHolderOffset + snapOffset;
-                        desiredPosition = (carouselContentViewSize+ carouselScrollView.spacing) * Math.Round((desiredPosition / (carouselContentViewSize+ carouselScrollView.spacing)));
+                        desiredPosition = (carouselContentViewSize + carouselScrollView.spacing) * Math.Round((desiredPosition / (carouselContentViewSize + carouselScrollView.spacing)));
                         desiredPosition -= snapOffset;
                         await carouselScrollView.ScrollToAsync(carouselScrollView.placeHolderOffset + desiredPosition, 0, true);
                     }
                 }
-            }            
+            }
         }
         private void CarouselScrollView_Scrolled(object sender, ScrolledEventArgs e)
         {
+            if (carouselWidth != carouselScrollView.ContentSize.Width)
+            {
+                carouselWidth = carouselScrollView.ContentSize.Width;
+                carouselContentViewSize = ((carouselWidth - 2 * carouselScrollView.placeHolderOffset - ((carouselPagesCount - 1) * carouselScrollView.spacing)) / (carouselPagesCount));
+            }
+            var previousPosition = Math.Round((carouselScrollPosition - carouselScrollView.placeHolderOffset) / (carouselContentViewSize + carouselScrollView.spacing));
             carouselScrollPosition = e.ScrollX;
-            carouselWidth = carouselScrollView.ContentSize.Width;
+            var currentPosition = Math.Round((carouselScrollPosition - carouselScrollView.placeHolderOffset) / (carouselContentViewSize + carouselScrollView.spacing));
+            if (previousPosition != currentPosition)
+            {
+                for (int i = 0; i < dotLayout.dots.Length; i++)
+                    if (currentPosition == i)
+                        dotLayout.dots[i].Opacity = 1;
+                    else
+                        dotLayout.dots[i].Opacity = 0.5;
+            }
         }
     }
+}
+
+namespace CarouselView.CustomControls { 
     public class CustomScrollView : ScrollView
     {
         public Carousel carouselParent;
@@ -217,4 +310,58 @@ namespace CarouselView
             }
         }
     }
+    public class DotButton : BoxView
+    {
+        public int index;
+        public DotButtonsLayout layout;
+        public event ClickHandler Clicked;
+        public delegate void ClickHandler(DotButton sender);
+        public DotButton()
+        {
+            var clickCheck = new TapGestureRecognizer()
+            {
+                Command = new Command(() =>
+                {
+                    if (Clicked != null)
+                    {
+                        Clicked(this);
+                    }
+                })
+            };
+            GestureRecognizers.Add(clickCheck);
+        }
+    }
+    public class DotButtonsLayout : StackLayout
+    {
+        //This array will hold the buttons
+        public DotButton[] dots;
+        public DotButtonsLayout(int dotCount, Color dotColor, int dotSize)
+        {
+            //Create as many buttons as desired.
+            dots = new DotButton[dotCount];
+            //This class inherits from a StackLayout, so we can stack
+            //the buttons together from left to right.
+            Orientation = StackOrientation.Horizontal;
+            VerticalOptions = LayoutOptions.Center;
+            HorizontalOptions = LayoutOptions.Center;
+            //Here we create the buttons.
+            for (int i = 0; i < dotCount; i++)
+            {
+                dots[i] = new DotButton
+                {
+                    HeightRequest = dotSize,
+                    WidthRequest = dotSize,
+                    BackgroundColor = dotColor,
+                    //All buttons except the first one will get an opacity
+                    //of 0.5 to visualize the first one is selected.
+                    Opacity = 0.5
+                };
+                dots[i].index = i;
+                dots[i].layout = this;
+                Children.Add(dots[i]);
+            }
+            dots[0].Opacity = 1;
+        }
+    }
+
 }

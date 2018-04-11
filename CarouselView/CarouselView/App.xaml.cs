@@ -13,7 +13,7 @@ namespace CarouselView
 		{
 			InitializeComponent();
 
-            MainPage = new TestVisualisationPage();
+            MainPage = new Page1();
 		}
 
 		protected override void OnStart ()
