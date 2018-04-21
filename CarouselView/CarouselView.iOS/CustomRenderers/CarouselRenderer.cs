@@ -7,9 +7,10 @@ using CarouselView.iOS.CustomRenderers;
 using Foundation;
 using UIKit;
 using Xamarin.Forms;
+using CarouselView.CustomControls;
 using Xamarin.Forms.Platform.iOS;
 
-[assembly: ExportRenderer(typeof(CarouselView.Carousel), typeof(CarouselRenderer))]
+[assembly: ExportRenderer(typeof(CustomScrollView), typeof(CarouselRenderer))]
 namespace CarouselView.iOS.CustomRenderers
 {
     public class CarouselRenderer : ViewRenderer
@@ -21,7 +22,7 @@ namespace CarouselView.iOS.CustomRenderers
             base.OnElementChanged(e);
 
             longPressGestureRecognizer = new UILongPressGestureRecognizer(() => Console.WriteLine("Long Press"));
-            swipeGestureRecognizer = new UISwipeGestureRecognizer()
+            swipeGestureRecognizer = new UISwipeGestureRecognizer();
             
             if (e.NewElement == null)
             {

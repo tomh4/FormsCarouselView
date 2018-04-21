@@ -239,129 +239,21 @@ namespace CarouselView
                 carouselWidth = carouselScrollView.ContentSize.Width;
                 carouselContentViewSize = ((carouselWidth - 2 * carouselScrollView.placeHolderOffset - ((carouselPagesCount - 1) * carouselScrollView.spacing)) / (carouselPagesCount));
             }
-            var previousPosition = Math.Round((carouselScrollPosition - carouselScrollView.placeHolderOffset) / (carouselContentViewSize + carouselScrollView.spacing));
             carouselScrollPosition = e.ScrollX;
-            var currentPosition = Math.Round((carouselScrollPosition - carouselScrollView.placeHolderOffset) / (carouselContentViewSize + carouselScrollView.spacing));
-            if (previousPosition != currentPosition)
+            if (Indicators)
             {
-                for (int i = 0; i < dotLayout.dots.Length; i++)
-                    if (currentPosition == i)
-                        dotLayout.dots[i].Opacity = 1;
-                    else
-                        dotLayout.dots[i].Opacity = 0.5;
+                var previousPosition = Math.Round((carouselScrollPosition - carouselScrollView.placeHolderOffset) / (carouselContentViewSize + carouselScrollView.spacing));
+                var currentPosition = Math.Round((carouselScrollPosition - carouselScrollView.placeHolderOffset) / (carouselContentViewSize + carouselScrollView.spacing));
+                if (previousPosition != currentPosition)
+                {
+                    for (int i = 0; i < dotLayout.dots.Length; i++)
+                        if (currentPosition == i)
+                            dotLayout.dots[i].Opacity = 1;
+                        else
+                            dotLayout.dots[i].Opacity = 0.5;
+                }
             }
         }
     }
 }
 
-namespace CarouselView.CustomControls { 
-    public class CustomScrollView : ScrollView
-    {
-        public Carousel carouselParent;
-        public double placeHolderOffset,spacing;
-        public double scrollViewWidth;
-        private bool initialised = false;
-        private async void InitScrollView()
-        {
-            var layout = (CustomStackLayout)Content;
-            var childViewSize = layout.Children[0].Width;
-            spacing = layout.Spacing;
-            placeHolderOffset = 0;
-            var placeHolderCount = (int)Math.Ceiling(scrollViewWidth / childViewSize);
-            for(int i = 0; i < placeHolderCount; i++)
-            {
-                placeHolderOffset += (childViewSize + spacing);
-                var startPlaceHolder = carouselParent.ItemTemplate.CreateContent() as ViewCell;
-                startPlaceHolder.View.Opacity = 0;
-                startPlaceHolder.View.InputTransparent = true;
-                var endPlaceHolder = carouselParent.ItemTemplate.CreateContent() as ViewCell;
-                endPlaceHolder.View.Opacity = 0;
-                endPlaceHolder.View.InputTransparent = true;
-                layout.Children.Insert(0, startPlaceHolder.View);
-                layout.Children.Add(endPlaceHolder.View);
-            }
-            var startPosition = scrollViewWidth * carouselParent.SnapPosition - childViewSize / 2;
-            if (startPosition < 0)
-            {
-                startPosition = 0;
-            }
-            await ScrollToAsync(placeHolderOffset - startPosition, 0, false);
-        }
-        protected override void OnSizeAllocated(double width, double height)
-        {
-            base.OnSizeAllocated(width, height);
-            if(width > 0 && !initialised)
-            {
-                initialised = true;
-                scrollViewWidth = width;
-                InitScrollView();
-            }
-        }
-    }
-    public class CustomStackLayout : StackLayout
-    {
-        public Carousel carouselParent;
-        protected override void OnChildAdded(Element child)
-        {
-            base.OnChildAdded(child);
-            if (child is View childview)
-            {
-                childview.GestureRecognizers.Add(carouselParent.tapGestureRecognizer);
-            }
-        }
-    }
-    public class DotButton : BoxView
-    {
-        public int index;
-        public DotButtonsLayout layout;
-        public event ClickHandler Clicked;
-        public delegate void ClickHandler(DotButton sender);
-        public DotButton()
-        {
-            var clickCheck = new TapGestureRecognizer()
-            {
-                Command = new Command(() =>
-                {
-                    if (Clicked != null)
-                    {
-                        Clicked(this);
-                    }
-                })
-            };
-            GestureRecognizers.Add(clickCheck);
-        }
-    }
-    public class DotButtonsLayout : StackLayout
-    {
-        //This array will hold the buttons
-        public DotButton[] dots;
-        public DotButtonsLayout(int dotCount, Color dotColor, int dotSize)
-        {
-            //Create as many buttons as desired.
-            dots = new DotButton[dotCount];
-            //This class inherits from a StackLayout, so we can stack
-            //the buttons together from left to right.
-            Orientation = StackOrientation.Horizontal;
-            VerticalOptions = LayoutOptions.Center;
-            HorizontalOptions = LayoutOptions.Center;
-            //Here we create the buttons.
-            for (int i = 0; i < dotCount; i++)
-            {
-                dots[i] = new DotButton
-                {
-                    HeightRequest = dotSize,
-                    WidthRequest = dotSize,
-                    BackgroundColor = dotColor,
-                    //All buttons except the first one will get an opacity
-                    //of 0.5 to visualize the first one is selected.
-                    Opacity = 0.5
-                };
-                dots[i].index = i;
-                dots[i].layout = this;
-                Children.Add(dots[i]);
-            }
-            dots[0].Opacity = 1;
-        }
-    }
-
-}

@@ -4,8 +4,17 @@
              xmlns:custom="clr-namespace:CarouselView"
              x:Class="CarouselView.Page1">
     <ContentPage.Content>
-        <StackLayout>
-            <custom:Carousel></custom:Carousel>
+        <StackLayout Padding="20">
+            <custom:Carousel x:Name="carousel" Snapping="True" SnapPosition="0.5" Indicators="True">
+                <custom:Carousel.ItemTemplate>
+                    <DataTemplate>
+                        <ViewCell>
+                            <BoxView Color="Black" HeightRequest="100" WidthRequest="100"/>
+                        </ViewCell>
+                    </DataTemplate>
+                </custom:Carousel.ItemTemplate>
+            </custom:Carousel>
         </StackLayout>
+
     </ContentPage.Content>
 </ContentPage>

@@ -15,6 +15,20 @@ namespace CarouselView
 		public Page1 ()
 		{
 			InitializeComponent ();
-		}
-	}
+            var list = new List<string>()
+            {
+                "g",
+                "g",
+                "g",
+                "g",
+                "g",
+                "g",
+                "g",
+                "g",
+                "g"
+            };
+            carousel.ItemsSource = list;
+
+        }
+    }
 }
