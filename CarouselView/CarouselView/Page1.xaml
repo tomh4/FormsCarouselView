@@ -5,7 +5,7 @@
              x:Class="CarouselView.Page1">
     <ContentPage.Content>
         <StackLayout Padding="20">
-            <custom:Carousel x:Name="carousel" Snapping="True" SnapPosition="0.5" Indicators="True">
+            <custom:Carousel x:Name="carousel" Snapping="True" SnapPosition="0.5" Indicators="True" IndicatorsColor="Black">
                 <custom:Carousel.ItemTemplate>
                     <DataTemplate>
                         <ViewCell>

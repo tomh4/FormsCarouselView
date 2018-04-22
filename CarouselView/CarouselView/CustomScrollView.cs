@@ -102,7 +102,7 @@ namespace CarouselView.CustomControls
                 {
                     HeightRequest = dotSize,
                     WidthRequest = dotSize,
-                    BackgroundColor = dotColor,
+                    Color = dotColor,
                     //All buttons except the first one will get an opacity
                     //of 0.5 to visualize the first one is selected.
                     Opacity = 0.5

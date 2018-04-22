@@ -24,8 +24,11 @@ namespace CarouselView.Droid.CustomRenderers
         {
 
         }
+        private static float SlowDownThreshold = 2f;
         HorizontalScrollView _scrollView;
-
+        bool isCurrentlyTouched = false;
+        bool hasSnapped = true;
+        bool isScrolling = false;
 
 
         protected override void OnElementChanged(VisualElementChangedEventArgs e)
@@ -45,7 +48,25 @@ namespace CarouselView.Droid.CustomRenderers
                     .GetValue(this);
                 _scrollView.HorizontalScrollBarEnabled = false;
                 _scrollView.Touch += _scrollView_Touch;
+                _scrollView.ScrollChange += _scrollView_ScrollChange;
+            }
 
+        }
+
+        private async void _scrollView_ScrollChange(object sender, ScrollChangeEventArgs e)
+        {
+            if (Math.Abs(e.ScrollX - e.OldScrollX) < SlowDownThreshold)
+            {
+                isScrolling = false;
+                if (!isCurrentlyTouched && !hasSnapped)
+                {
+                    hasSnapped = true;
+                    await((CustomScrollView)Element).carouselParent.Snap();
+                }
+            }
+            else
+            {
+                isScrolling = true;
             }
 
         }
@@ -55,10 +76,20 @@ namespace CarouselView.Droid.CustomRenderers
             e.Handled = false;
             switch (e.Event.Action)
             {
-                case MotionEventActions.Up:
-                    await ((CustomScrollView)Element).carouselParent.Snap();
+                case MotionEventActions.Move:
+                    hasSnapped = false;
+                    isCurrentlyTouched = true;
                     break;
-
+                case MotionEventActions.Cancel:
+                case MotionEventActions.Up:
+                    isCurrentlyTouched = false;
+                    // Not always triggered, play around with scrolling speed
+                    if (!isScrolling)
+                    {
+                        hasSnapped = true;
+                        await ((CustomScrollView)Element).carouselParent.Snap();
+                    }
+                    break;
             }
         }
     }

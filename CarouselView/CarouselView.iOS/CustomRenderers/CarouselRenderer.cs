@@ -15,33 +15,19 @@ namespace CarouselView.iOS.CustomRenderers
 {
     public class CarouselRenderer : ViewRenderer
     {
-        UILongPressGestureRecognizer longPressGestureRecognizer;
-        UISwipeGestureRecognizer swipeGestureRecognizer;
+        private static float SlowDownThreshold = 2f;
+        UIScrollView _scrollView;
+        bool isCurrentlyTouched = false;
+        bool hasSnapped = true;
+        bool isScrolling = false;
         protected override void OnElementChanged(ElementChangedEventArgs<View> e)
         {
             base.OnElementChanged(e);
-
-            longPressGestureRecognizer = new UILongPressGestureRecognizer(() => Console.WriteLine("Long Press"));
-            swipeGestureRecognizer = new UISwipeGestureRecognizer();
-            
-            if (e.NewElement == null)
-            {
-                if (longPressGestureRecognizer != null)
-                {
-                    this.RemoveGestureRecognizer(longPressGestureRecognizer);
-                }
-               if (swipeGestureRecognizer != null)
-                {
-                    this.RemoveGestureRecognizer(swipeGestureRecognizer);
-                }                
-            }
-
-            if (e.OldElement == null)
-            {
-                this.AddGestureRecognizer(longPressGestureRecognizer);
-                this.AddGestureRecognizer(swipeGestureRecognizer);
-            }
+            if (e.NewElement == null) return;
+            _scrollView = (UIScrollView)NativeView;
+            _scrollView.ShowsHorizontalScrollIndicator = false;
+            _scrollView.Scrolled += _scrollView_Scrolled; ;
+            _scrollView.
         }
-
     }
 }

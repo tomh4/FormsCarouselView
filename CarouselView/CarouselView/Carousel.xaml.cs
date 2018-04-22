@@ -168,10 +168,26 @@ namespace CarouselView
             //Create indicators and place them abover or below the carousel
             if (Indicators)
             {
+                var buttonList = carouselMainLayout.Children.Where(x => x.GetType() == typeof(DotButtonsLayout)).ToList();
+                if(buttonList.Count > 0)
+                {
+                    for(int i= 0; i < buttonList.Count; i++)
+                    {
+                        carouselMainLayout.Children.Remove(buttonList[i]);
+                    }
+                }
                 dotLayout = new DotButtonsLayout(carouselPagesCount, IndicatorsColor, IndicatorsSize);
                 foreach (DotButton dot in dotLayout.dots)
                     dot.Clicked += DotClicked;
-            }
+                if (IndicatorsAboveCarousel)
+                {
+                    carouselMainLayout.Children.Insert(0, dotLayout);
+                }
+                else
+                {
+                    carouselMainLayout.Children.Add(dotLayout);
+                }
+            }       
         }
         //The function called by the buttons clicked event
         private async void DotClicked(object sender)
@@ -239,11 +255,10 @@ namespace CarouselView
                 carouselWidth = carouselScrollView.ContentSize.Width;
                 carouselContentViewSize = ((carouselWidth - 2 * carouselScrollView.placeHolderOffset - ((carouselPagesCount - 1) * carouselScrollView.spacing)) / (carouselPagesCount));
             }
-            carouselScrollPosition = e.ScrollX;
             if (Indicators)
             {
-                var previousPosition = Math.Round((carouselScrollPosition - carouselScrollView.placeHolderOffset) / (carouselContentViewSize + carouselScrollView.spacing));
-                var currentPosition = Math.Round((carouselScrollPosition - carouselScrollView.placeHolderOffset) / (carouselContentViewSize + carouselScrollView.spacing));
+                var previousPosition = 1 + Math.Round((carouselScrollPosition - carouselScrollView.placeHolderOffset) / (carouselContentViewSize + carouselScrollView.spacing));
+                var currentPosition = 1 + Math.Round((e.ScrollX - carouselScrollView.placeHolderOffset) / (carouselContentViewSize + carouselScrollView.spacing));
                 if (previousPosition != currentPosition)
                 {
                     for (int i = 0; i < dotLayout.dots.Length; i++)
@@ -253,6 +268,7 @@ namespace CarouselView
                             dotLayout.dots[i].Opacity = 0.5;
                 }
             }
+            carouselScrollPosition = e.ScrollX;
         }
     }
 }
